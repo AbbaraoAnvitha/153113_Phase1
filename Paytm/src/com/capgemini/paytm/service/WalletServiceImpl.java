@@ -26,10 +26,7 @@ public WalletRepo repo;
 	WalletRepoImpl obj=new WalletRepoImpl();
 	
 	public Customer createAccount(String name, String mobileNo, BigDecimal amount) {
-		
-		if(mobileNo.length()<10) {
-			throw new InputMismatchException("InvalidPhone Number");
-		}
+		if(isValidPhoneNumber(mobileNo) && isValidName(name) && amount.compareTo(new BigDecimal(0)) > 0) {
 		Customer cust=new Customer(name,mobileNo,new Wallet(amount));		
 		
 		boolean result=repo.save(cust);
@@ -37,19 +34,23 @@ public WalletRepo repo;
 			return cust;
 		else
 			return null;
-		}
-
-	public Customer showBalance(String mobileNo) {
-		
-		Customer customer=repo.findOne(mobileNo);		
-		if(customer!=null)
-			return customer;
-		else
-			throw new InvalidInputException("Invalid mobile no ");
+		}else throw new InvalidInputException("Please Enter Valid Details");
 	}
+	public Customer showBalance(String mobileNo) {
+		if(isValidPhoneNumber(mobileNo)) { 
+		Customer customer=repo.findOne(mobileNo);		
+		 	if(customer!=null) {
+		 		return customer;
+		 	}else 
+		 		throw new InvalidInputException("Invalid mobile no ");
+	}else
+		throw new InvalidInputException("Invalid mobile number, Please Enter valid mobile number"
+				+ " ");
+}
 
 	public Customer fundTransfer(String sourceMobileNo, String targetMobileNo, BigDecimal amount) {	
-		
+		if(isValidPhoneNumber(sourceMobileNo) == false || isValidPhoneNumber(targetMobileNo) == false) 
+			throw new InvalidInputException();
 		Customer sourceCust=new Customer();
 		Customer targetCust=new Customer();
 		Wallet sourceWallet=new Wallet();
@@ -69,7 +70,7 @@ public WalletRepo repo;
 			obj.getData().put(targetMobileNo, targetCust);
 			obj.getData().put(sourceMobileNo, sourceCust);
 		}else{
-			System.out.println("Insufficient Balance");
+			throw new InsufficientBalanceException("Insufficient Balance");
 		}
 				
 		}else{
@@ -79,6 +80,9 @@ public WalletRepo repo;
 	}
 
 	public Customer depositAmount(String mobileNo, BigDecimal amount) {
+		if(amount.compareTo(new BigDecimal(0)) <= 0) 
+			throw new InvalidInputException("Please Enter valid amount");
+		if(isValidPhoneNumber(mobileNo)) {
 		Customer cust=new Customer();
 		Wallet wallet=new Wallet();
 		cust=repo.findOne(mobileNo);
@@ -89,9 +93,14 @@ public WalletRepo repo;
 			obj.getData().put(mobileNo, cust);
 		}
 		return cust;
+	}else throw new InvalidInputException(" Please Enter valid mobile number");
+		
 	}
 
 	public Customer withdrawAmount(String mobileNo, BigDecimal amount) {
+		if(amount.compareTo(new BigDecimal(0)) <= 0) 
+			throw new InvalidInputException("Please Enter valid amount");
+		if(isValidPhoneNumber(mobileNo)) {
 		Customer cust=new Customer();
 		Wallet wallet=new Wallet();
 		cust=repo.findOne(mobileNo);
@@ -108,5 +117,20 @@ public WalletRepo repo;
 			}
 		}
 		return cust;
+		}else throw new InvalidInputException("Enter Valid Mobile Number");
+	}
+	
+	public boolean isValidPhoneNumber(String mobileNo) {
+		if(mobileNo.matches("[1-9][0-9]{9}")) 	{
+			return true;
+		}		
+		else 
+			return false;
+	}
+	
+	private boolean isValidName(String name) {
+		if( name == null || name.trim().isEmpty() )
+			return false;
+		return true;
 	}
 }
